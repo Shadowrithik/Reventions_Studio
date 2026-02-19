@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --font-tech: var(--font-tech);
+  --font-sans: var(--font-sans);
+  
+  --color-neon-purple: #b0fb5d;
+  --color-neon-cyan: #00f0ff;
+  
+  --animate-aurora: aurora 20s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  
+  @keyframes aurora {
+    from { background-position: 50% 50%, 50% 50%; }
+    to { background-position: 350% 50%, 350% 50%; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+}
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+  /* Premium Grain Texture Overlay */
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+  background-size: 80px; /* Fine grain */
+}
+
+/* Scrollbar Hide */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
