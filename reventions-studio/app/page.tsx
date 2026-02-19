@@ -70,11 +70,12 @@ export default function Home() {
           </div>
         </nav>
 
-        {/* HERO SECTION - FIXED O CLIPPING */}
+        {/* HERO SECTION - ADJUSTED PADDING TO REVEAL BADGE */}
         <motion.section 
           style={{ opacity, scale }}
-          className="relative min-h-screen flex flex-col items-center justify-center text-center px-8"
+          className="relative min-h-screen flex flex-col items-center justify-center text-center px-8 pt-32 md:pt-40"
         >
+          {/* Badge is now pushed down by pt-32 / pt-40 */}
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-[9px] uppercase tracking-[0.4em] mb-12 text-white/60">
             <Sparkles className="w-3.5 h-3.5 text-purple-400" />
             Creative Manufacturing v4.2
@@ -82,7 +83,6 @@ export default function Home() {
 
           <h1 className="w-full max-w-[95vw] text-7xl md:text-[11rem] font-bold leading-[0.85] tracking-tighter uppercase select-none px-4">
             REVENTIONS <br />
-            {/* Added pr-4 (padding-right) specifically to house the italic O overflow */}
             <span className="inline-block pr-6 text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/10 italic">
               STUDIO
             </span>
@@ -104,7 +104,7 @@ export default function Home() {
           </div>
         </motion.section>
 
-        {/* FORGE SECTION */}
+        {/* FORGE SECTION - PRODUCT SHOWCASE (InkSpire, AI-RAG, Audit_Flow) */}
         <section id="forge" className="py-60 px-6 max-w-7xl mx-auto pointer-events-auto">
           <div className="grid md:grid-cols-3 gap-6 text-left">
             <div className="md:col-span-2 relative group p-12 rounded-[2.5rem] bg-white/[0.02] border border-white/10 backdrop-blur-2xl overflow-hidden">
@@ -153,7 +153,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* LABS SECTION - FIXED WATERMARK CLIPPING */}
+        {/* LABS SECTION */}
         <motion.section 
           id="labs" 
           className="py-60 px-6 text-center relative pointer-events-auto overflow-hidden"
@@ -195,13 +195,13 @@ export default function Home() {
             <div>
               <div className="text-xs tracking-[0.5em] font-bold uppercase mb-4">REVENTIONS STUDIO</div>
               <p className="text-white/20 text-[10px] uppercase tracking-widest leading-loose">
-                Forged in Chennai. <br />
+                Forged in  <br />
                 Deployed Worldwide.
               </p>
             </div>
             <div className="flex gap-12 text-[10px] uppercase tracking-[0.3em] text-white/40">
               <a href="#" className="hover:text-white transition">Twitter</a>
-              <a href="#" className="hover:text-white transition">GitHub</a>
+              <a href="https://github.com/Shadowrithik" className="hover:text-white transition">GitHub</a>
               <a href="#" className="hover:text-white transition">Archive</a>
             </div>
             <div className="md:text-right text-[10px] uppercase tracking-widest text-white/20 font-mono">

@@ -7,27 +7,25 @@ import * as THREE from "three";
 
 const STAR_COUNT = 600;
 
-function generateStarPositions() {
-  const pos = new Float32Array(STAR_COUNT * 3);
-  for (let i = 0; i < STAR_COUNT; i++) {
-    pos[i * 3] = (Math.random() - 0.5) * 100;
-    pos[i * 3 + 1] = (Math.random() - 0.5) * 60;
-    pos[i * 3 + 2] = (Math.random() - 0.5) * 50;
-  }
-  return pos;
-}
-
 function StarField() {
   const starsRef = useRef<THREE.Points>(null);
   const constellationGroup = useRef<THREE.Group>(null);
-  const nebulaRef = useRef<THREE.Mesh>(null);
-  const mainGroup = useRef<THREE.Group>(null); // Anchor for the whole scene
+  const mainGroup = useRef<THREE.Group>(null);
+  const glowLight = useRef<THREE.PointLight>(null);
 
   const { pointer, viewport } = useThree();
 
-  // STAR POSITIONS & DRIFT SPEEDS
-  const positions = useMemo(() => {
-    return generateStarPositions();
+  // 1. GENERATE STAR DATA (Positions & Individual Drift Speeds)
+  const { positions, step } = useMemo(() => {
+    const pos = new Float32Array(STAR_COUNT * 3);
+    const stepArr = new Float32Array(STAR_COUNT);
+    for (let i = 0; i < STAR_COUNT; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 100;     // X
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 60; // Y
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 50; // Z
+      stepArr[i] = Math.random() * 0.4 + 0.1;      // Drift Speed
+    }
+    return { positions: pos, step: stepArr };
   }, []);
 
   const starGeo = useMemo(() => {
@@ -36,6 +34,7 @@ function StarField() {
     return geo;
   }, [positions]);
 
+  // 2. CONSTELLATION DATA
   const constellationData = useMemo(() => [
     { base: [0, 16, -40], scale: 2.4, points: [[0, 0, 0], [3, 2, 0], [6, 1, 0], [8, 4, 0], [5, 6, 0], [2, 5, 0]] },
     { base: [-85, 4, -70], scale: 3.5, points: [[0, 0, 0], [4, 2, 0], [7, -1, 0], [10, 2, 0], [6, 5, 0], [2, 4, 0]] },
@@ -44,22 +43,33 @@ function StarField() {
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
-    
-    // 1. 3D CAMERA PARALLAX (Rotation & Position)
-    // We tilt the main group instead of just the camera for a more "physical" feel
+
+    // ── 1. COSMOS MOUSE GLOW (Purple Light Tracking) ──
+    if (glowLight.current) {
+      const targetX = (pointer.x * viewport.width) / 2;
+      const targetY = (pointer.y * viewport.height) / 2;
+      
+      // Smooth interpolation for the follower light
+      glowLight.current.position.x += (targetX - glowLight.current.position.x) * 0.1;
+      glowLight.current.position.y += (targetY - glowLight.current.position.y) * 0.1;
+      
+      // Breathing pulse effect
+      glowLight.current.intensity = 15 + Math.sin(time * 2) * 5;
+    }
+
+    // ── 2. 3D CAMERA & SCENE PARALLAX ──
     if (mainGroup.current) {
-      // Rotate the entire scene slightly based on mouse
-      // mouse.x/y is -1 to 1. We multiply by 0.1 for a subtle, high-pro tilt.
+      // Tilt the entire scene for physical depth
       mainGroup.current.rotation.y += (pointer.x * 0.15 - mainGroup.current.rotation.y) * 0.05;
       mainGroup.current.rotation.x += (-pointer.y * 0.1 - mainGroup.current.rotation.x) * 0.05;
       
-      // Move the camera position slightly for depth parallax
+      // Dynamic camera movement
       state.camera.position.x += (pointer.x * 3 - state.camera.position.x) * 0.05;
       state.camera.position.y += (pointer.y * 2 - state.camera.position.y) * 0.05;
       state.camera.lookAt(0, 0, 0);
     }
 
-    // 2. STAR PHYSICS (Repel + Drift)
+    // ── 3. STAR PHYSICS (Repel + Drift + Twinkle) ──
     if (starsRef.current) {
       const attr = starsRef.current.geometry.attributes.position;
       const mouseX = (pointer.x * viewport.width) / 2;
@@ -67,28 +77,30 @@ function StarField() {
 
       for (let i = 0; i < STAR_COUNT; i++) {
         const i3 = i * 3;
-        const tx = positions[i3] + Math.sin(time * 0.15 + i) * 0.5;
-        const ty = positions[i3 + 1] + Math.cos(time * 0.12 + i) * 0.5;
+        
+        // Target position based on random drift
+        const tx = positions[i3] + Math.sin(time * 0.1 + i) * 0.5;
+        const ty = positions[i3 + 1] + Math.cos(time * 0.1 + i) * 0.5;
 
-        // Repel from mouse cursor
+        // Repel Logic
         const dx = attr.array[i3] - mouseX;
         const dy = attr.array[i3 + 1] - mouseY;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < 10) {
-          const force = (10 - dist) * 0.12;
+        if (dist < 12) {
+          const force = (12 - dist) * 0.15;
           attr.array[i3] += (dx / dist) * force;
           attr.array[i3 + 1] += (dy / dist) * force;
         }
 
-        // Elastic return to drift position
+        // Return to drift position (elasticity)
         attr.array[i3] += (tx - attr.array[i3]) * 0.03;
         attr.array[i3 + 1] += (ty - attr.array[i3 + 1]) * 0.03;
       }
       attr.needsUpdate = true;
     }
 
-    // 3. CONSTELLATION FLOATING
+    // ── 4. CONSTELLATION FLOATING ──
     if (constellationGroup.current) {
       constellationGroup.current.children.forEach((group, i) => {
         group.position.y += Math.sin(time * 0.3 + i) * 0.008;
@@ -98,13 +110,19 @@ function StarField() {
 
   return (
     <group ref={mainGroup}>
-      {/* BACKGROUND NEBULA */}
-      <mesh ref={nebulaRef} position={[0, 0, -90]}>
-        <circleGeometry args={[120, 64]} />
-        <meshBasicMaterial color="#4338ca" transparent opacity={0.03} />
-      </mesh>
+      {/* Dynamic Purple Follower Light */}
+      <pointLight 
+        ref={glowLight}
+        color="#a855f7" 
+        distance={45} 
+        decay={2} 
+        intensity={15} 
+      />
 
-      {/* STAR FIELD */}
+      {/* Ambient Base Light */}
+      <ambientLight intensity={0.2} />
+
+      {/* Star Field Points */}
       <points ref={starsRef} geometry={starGeo}>
         <pointsMaterial 
           size={0.12} 
@@ -116,10 +134,11 @@ function StarField() {
         />
       </points>
 
-      {/* CONSTELLATIONS */}
+      {/* Crystalline Constellations */}
       <group ref={constellationGroup}>
         {constellationData.map((c, index) => (
           <group key={index} position={c.base as [number, number, number]} scale={c.scale}>
+            {/* Constellation Nodes (Stars) */}
             <points>
               <bufferGeometry>
                 <bufferAttribute attach="attributes-position" args={[new Float32Array(c.points.flat()), 3]} />
@@ -127,6 +146,7 @@ function StarField() {
               <pointsMaterial size={0.3} color="#ffffff" transparent blending={THREE.AdditiveBlending} opacity={0.8} />
             </points>
 
+            {/* Glowing Connector Lines */}
             {c.points.map((p, i) => {
               if (i === c.points.length - 1) return null;
               const next = c.points[i + 1];
@@ -142,6 +162,12 @@ function StarField() {
           </group>
         ))}
       </group>
+
+      {/* Deep Nebula Background Plane */}
+      <mesh position={[0, 0, -85]}>
+        <circleGeometry args={[110, 64]} />
+        <meshBasicMaterial color="#4c1d95" transparent opacity={0.03} />
+      </mesh>
     </group>
   );
 }
@@ -151,8 +177,8 @@ export default function Particles() {
     <div className="fixed inset-0 z-0 bg-[#030303]">
       <Canvas camera={{ position: [0, 0, 40], fov: 55 }} dpr={[1, 2]}>
         <StarField />
-        <EffectComposer enableNormalPass={false}>
-          <Bloom 
+        <EffectComposer disableNormalPass>
+          <Bloom
             luminanceThreshold={0.2} 
             mipmapBlur 
             intensity={1.5} 
@@ -161,9 +187,9 @@ export default function Particles() {
         </EffectComposer>
       </Canvas>
       
-      {/* Advanced Glossy Vignette */}
+      {/* Cinematic Vignette Overlay */}
       <div className="pointer-events-none fixed inset-0 z-10 
-        bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.8)_100%)] opacity-80" 
+        bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] opacity-85" 
       />
     </div>
   );
