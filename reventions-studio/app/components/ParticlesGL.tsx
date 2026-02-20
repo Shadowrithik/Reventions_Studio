@@ -2,10 +2,22 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect, useState } from "react";
 import * as THREE from "three";
 
 const STAR_COUNT = 600;
+
+function generateStarData() {
+  const pos = new Float32Array(STAR_COUNT * 3);
+  const stepArr = new Float32Array(STAR_COUNT);
+  for (let i = 0; i < STAR_COUNT; i++) {
+    pos[i * 3] = (Math.random() - 0.5) * 100;     // X
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 60; // Y
+    pos[i * 3 + 2] = (Math.random() - 0.5) * 50; // Z
+    stepArr[i] = Math.random() * 0.4 + 0.1;      // Drift Speed
+  }
+  return { positions: pos, step: stepArr };
+}
 
 function StarField() {
   const starsRef = useRef<THREE.Points>(null);
@@ -16,17 +28,9 @@ function StarField() {
   const { pointer, viewport } = useThree();
 
   // 1. GENERATE STAR DATA (Positions & Individual Drift Speeds)
-  const { positions, step } = useMemo(() => {
-    const pos = new Float32Array(STAR_COUNT * 3);
-    const stepArr = new Float32Array(STAR_COUNT);
-    for (let i = 0; i < STAR_COUNT; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 100;     // X
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 60; // Y
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 50; // Z
-      stepArr[i] = Math.random() * 0.4 + 0.1;      // Drift Speed
-    }
-    return { positions: pos, step: stepArr };
-  }, []);
+  const [starData, setStarData] = useState(() => generateStarData());
+  const positions = starData.positions;
+  const step = starData.step;
 
   const starGeo = useMemo(() => {
     const geo = new THREE.BufferGeometry();
@@ -177,7 +181,7 @@ export default function Particles() {
     <div className="fixed inset-0 z-0 bg-[#030303]">
       <Canvas camera={{ position: [0, 0, 40], fov: 55 }} dpr={[1, 2]}>
         <StarField />
-        <EffectComposer disableNormalPass>
+        <EffectComposer enableNormalPass={false}>
           <Bloom
             luminanceThreshold={0.2} 
             mipmapBlur 
