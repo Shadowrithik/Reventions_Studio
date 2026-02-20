@@ -135,7 +135,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="text-left sm:text-right">
-                  <p className="text-[10px] uppercase tracking-[0.4em] text-white/30 mb-2 font-medium">Lead Architect</p>
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-white/30 mb-2 font-medium">Polymath & Lead Architect</p>
                   <p className="text-lg font-bold tracking-widest uppercase">Rithik Kumar</p>
                 </div>
               </div>
